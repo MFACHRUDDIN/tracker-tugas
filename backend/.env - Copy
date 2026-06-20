@@ -1,0 +1,8 @@
+jangan diubah dulu, kita isi nanti setelah Supabase siap:
+SUPABASE_URL=https://gmbfmdofkrcmryxcurry.supabase.co/rest/v1/
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtYmZtZG9ma3JjbXJ5eGN1cnJ5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MTk2NTA4NCwiZXhwIjoyMDk3NTQxMDg0fQ.7ukYms0rhiuiyZLKImlSR0yf5S-jtA3v_qRJBg4n5ZA
+JWT_SECRET=kelas-manajemen-semester1-2026-rahasia-banget
+CLASS_CODE=MANAJEMEN1A
+ADMIN_CODE=DOSENMNJ2026
+FRONTEND_URL=*
+PORT=3000

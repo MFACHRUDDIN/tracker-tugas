@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tracker Tugas — Manajemen Semester 1</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg:       '#070b16',
+          surface:  '#111827',
+          surface2: '#1a2540',
+          bdr:      '#243149',
+          accent:   '#10b981',
+          accent2:  '#34d399',
+        },
+        fontFamily: { sans: ['Plus Jakarta Sans','system-ui','sans-serif'] },
+      },
+    },
+  };
+</script>
+<!-- URL backend diisi di sini: -->
+<script src="config.js"></script>
+<style>
+  body { background: radial-gradient(ellipse 140% 60% at 50% -5%, #0f1c38 0%, #070b16 60%); }
+  ::-webkit-scrollbar { width:7px; }
+  ::-webkit-scrollbar-thumb { background:#243149; border-radius:6px; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);} }
+  .fade-up { animation: fadeUp .3s ease both; }
+  .line-clamp-2 { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor:pointer; }
+</style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans antialiased">
+
+<!-- ═══════════════════════════ LOGIN ═══════════════════════════ -->
+<div id="loginScreen" class="min-h-screen flex flex-col items-center justify-center px-4 py-10">
+  <div class="w-full max-w-sm">
+
+    <!-- Brand -->
+    <div class="flex items-center gap-3 mb-8 justify-center">
+      <div class="w-12 h-12 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center">
+        <svg class="w-6 h-6 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5Z"/><path d="M7 11.5V17c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-5.5"/><line x1="21" y1="9.5" x2="21" y2="15"/></svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-extrabold leading-tight">Tugas Manajemen</h1>
+        <p class="text-xs text-slate-400 mt-0.5">Tracker tugas kuliah · Semester 1</p>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <form id="loginForm" class="bg-surface border border-bdr rounded-2xl p-6 space-y-4 shadow-2xl">
+      <div>
+        <h2 class="font-bold text-base mb-0.5">Masuk ke kelas</h2>
+        <p class="text-xs text-slate-400">Ketik nama kamu dan kode kelas dari dosen.</p>
+      </div>
+
+      <div class="space-y-1.5">
+        <label for="loginNama" class="text-xs font-semibold text-slate-400">Nama lengkap</label>
+        <input id="loginNama" type="text" autocomplete="name" placeholder="Contoh: Siti Aminah"
+          class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition placeholder:text-slate-600">
+      </div>
+
+      <div class="space-y-1.5">
+        <label for="loginKode" class="text-xs font-semibold text-slate-400">Kode kelas</label>
+        <input id="loginKode" type="text" placeholder="Tanyakan ke dosen atau teman sekelas"
+          class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition placeholder:text-slate-600">
+      </div>
+
+      <p id="loginErr" class="text-xs text-red-400 hidden"></p>
+
+      <button type="submit" id="loginBtn"
+        class="w-full bg-accent hover:bg-accent2 text-[#062317] font-bold text-sm rounded-xl py-2.5 transition flex items-center justify-center gap-2">
+        <span id="loginBtnTxt">Masuk</span>
+      </button>
+    </form>
+
+    <button id="goBtnPublic" type="button"
+      class="mt-4 w-full text-xs text-slate-500 hover:text-accent transition flex items-center justify-center gap-1.5 py-1">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 3"/></svg>
+      Lihat statistik publik kelas (tanpa login)
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════ PUBLIC DASHBOARD ════════════════════════ -->
+<div id="publicScreen" class="min-h-screen px-4 py-10 hidden">
+  <div class="max-w-xl mx-auto">
+
+    <button id="backFromPublic" type="button"
+      class="flex items-center gap-1.5 text-xs text-slate-400 hover:text-accent transition mb-7">
+      <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+      Kembali ke login
+    </button>
+
+    <div class="mb-7">
+      <h1 class="text-xl font-extrabold mb-1">Statistik Publik Kelas</h1>
+      <p class="text-sm text-slate-400">Ringkasan tugas seluruh mahasiswa — anonim, tidak ada nama yang tampil.</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3.5 mb-4">
+      <div class="bg-surface border border-bdr rounded-2xl p-4">
+        <p class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>Tugas Aktif
+        </p>
+        <p class="text-3xl font-black" id="pubAktif">–</p>
+      </div>
+      <div class="bg-surface border border-bdr rounded-2xl p-4">
+        <p class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-accent inline-block"></span>Tugas Selesai
+        </p>
+        <p class="text-3xl font-black text-accent" id="pubSelesai">–</p>
+      </div>
+    </div>
+
+    <div class="bg-surface border border-bdr rounded-2xl p-4 mb-3.5">
+      <p class="text-xs font-semibold text-slate-400 mb-1.5">Mata kuliah paling banyak tugasnya</p>
+      <p class="font-bold text-base" id="pubMatkul">Memuat…</p>
+    </div>
+
+    <div class="bg-surface border border-bdr rounded-2xl p-4">
+      <p class="text-xs font-semibold text-slate-400 mb-1.5">Deadline terdekat di kelas</p>
+      <p class="font-bold text-base" id="pubDeadline">Memuat…</p>
+    </div>
+
+    <p class="text-[11px] text-slate-600 text-center mt-6">Diperbarui otomatis setiap 15 detik.</p>
+  </div>
+</div>
+
+<!-- ════════════════════════ APP SCREEN ════════════════════════ -->
+<div id="appScreen" class="hidden min-h-screen">
+  <div class="max-w-[1180px] mx-auto px-5 pt-7 pb-24">
+
+    <!-- Top bar -->
+    <header class="flex items-center justify-between flex-wrap gap-4 mb-7">
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-2xl bg-accent/15 border border-accent/30 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9.5 12 5l9 4.5-9 4.5-9-4.5Z"/><path d="M7 11.5V17c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-5.5"/><line x1="21" y1="9.5" x2="21" y2="15"/></svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-base font-extrabold leading-tight">Tracker Tugas Manajemen</span>
+            <span id="roleBadge" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent border border-accent/30"></span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5" id="userGreet"></p>
+        </div>
+      </div>
+
+      <button id="logoutBtn" type="button"
+        class="text-xs font-semibold text-slate-400 hover:text-red-400 border border-bdr hover:border-red-400/40 rounded-xl px-3.5 py-2 transition flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Keluar
+      </button>
+    </header>
+
+    <!-- Stats -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
+      <div class="bg-surface border-t-2 border-bdr rounded-2xl p-4" style="border-top-color:#94a3b8">
+        <p class="text-[11px] font-semibold text-slate-400 mb-2">Total Tugas</p>
+        <p class="text-3xl font-black" id="sTot">0</p>
+      </div>
+      <div class="bg-surface border-t-2 border-bdr rounded-2xl p-4" style="border-top-color:#ef4444">
+        <p class="text-[11px] font-semibold text-slate-400 mb-2">Mendesak ≤3 hari</p>
+        <p class="text-3xl font-black" id="sMen">0</p>
+      </div>
+      <div class="bg-surface border-t-2 border-bdr rounded-2xl p-4" style="border-top-color:#f59e0b">
+        <p class="text-[11px] font-semibold text-slate-400 mb-2">Segera 4–7 hari</p>
+        <p class="text-3xl font-black" id="sSeg">0</p>
+      </div>
+      <div class="bg-surface border-t-2 border-bdr rounded-2xl p-4" style="border-top-color:#10b981">
+        <p class="text-[11px] font-semibold text-slate-400 mb-2">Selesai</p>
+        <p class="text-3xl font-black text-accent" id="sSel">0</p>
+      </div>
+    </section>
+
+    <!-- Filter chips -->
+    <div class="flex flex-wrap gap-2 mb-5" id="chips"></div>
+
+    <!-- Toolbar -->
+    <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
+      <p class="text-sm text-slate-400" id="taskCount"></p>
+      <button id="addBtn" type="button"
+        class="inline-flex items-center gap-2 bg-accent hover:bg-accent2 text-[#062317] font-bold text-sm rounded-xl px-4 py-2.5 transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Tambah Tugas
+      </button>
+    </div>
+
+    <!-- Task grid -->
+    <div id="taskGrid" class="grid gap-4" style="grid-template-columns:repeat(auto-fill,minmax(305px,1fr))"></div>
+
+    <div id="emptyState" class="hidden text-center py-16 text-slate-400 border-2 border-dashed border-bdr rounded-2xl">
+      <svg class="w-10 h-10 mx-auto mb-3 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M9 10h6M9 14h4"/></svg>
+      <p class="font-bold text-slate-200 mb-1">Belum ada tugas</p>
+      <p class="text-sm">Coba ganti filter mata kuliah, atau tambahkan tugas baru.</p>
+    </div>
+
+    <div id="errState" class="hidden text-center py-16 text-slate-400 border-2 border-dashed border-red-500/30 rounded-2xl">
+      <p class="font-bold text-red-400 mb-1">Tidak bisa terhubung ke server</p>
+      <p class="text-sm">Pastikan backend berjalan dan <code class="text-slate-300">config.js</code> sudah benar.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: TAMBAH / EDIT ═══════════════════ -->
+<div id="taskOverlay"
+  class="fixed inset-0 bg-[#030712]/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+  <div id="taskModalBox"
+    class="bg-surface2 border border-bdr rounded-[20px] w-full max-w-[560px] max-h-[92vh] overflow-y-auto shadow-2xl translate-y-3 transition-transform duration-200">
+
+    <div class="flex items-center justify-between p-5 pb-4 border-b border-bdr sticky top-0 bg-surface2 z-10">
+      <h2 class="text-base font-extrabold" id="modalHeading">Tambah Tugas Baru</h2>
+      <button id="closeModal" type="button" aria-label="Tutup"
+        class="w-8 h-8 rounded-lg text-slate-400 hover:bg-surface hover:text-slate-100 flex items-center justify-center transition">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </div>
+
+    <form id="taskForm" novalidate class="p-5 space-y-4">
+      <!-- Judul -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Judul Tugas</label>
+        <input id="fJudul" type="text" placeholder="Contoh: Makalah Fungsi Manajemen"
+          class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition placeholder:text-slate-600">
+      </div>
+
+      <!-- Matkul + Jenis -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Mata Kuliah</label>
+          <select id="fMatkul"
+            class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition appearance-none cursor-pointer"></select>
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Jenis Tugas</label>
+          <select id="fJenis"
+            class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition appearance-none cursor-pointer"></select>
+        </div>
+      </div>
+
+      <!-- Custom fields (Lainnya) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div id="matkulCustomWrap" class="space-y-1.5 hidden">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Nama Mata Kuliah</label>
+          <input id="fMatkulCustom" type="text" placeholder="Ketik nama mata kuliah"
+            class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition placeholder:text-slate-600">
+        </div>
+        <div id="jenisCustomWrap" class="space-y-1.5 hidden">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Nama Jenis Tugas</label>
+          <input id="fJenisCustom" type="text" placeholder="Ketik jenis tugas"
+            class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition placeholder:text-slate-600">
+        </div>
+      </div>
+
+      <!-- Mode -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Mode Pengerjaan</label>
+        <div class="flex gap-2.5">
+          <label class="flex-1 flex items-center justify-center gap-2 border border-bdr bg-bg rounded-xl py-2.5 text-sm text-slate-400 cursor-pointer transition has-[:checked]:border-accent has-[:checked]:bg-accent/10 has-[:checked]:text-slate-100 font-medium">
+            <input type="radio" name="fMode" value="individu" class="hidden">
+            👤 Individu
+          </label>
+          <label class="flex-1 flex items-center justify-center gap-2 border border-bdr bg-bg rounded-xl py-2.5 text-sm text-slate-400 cursor-pointer transition has-[:checked]:border-accent has-[:checked]:bg-accent/10 has-[:checked]:text-slate-100 font-medium">
+            <input type="radio" name="fMode" value="kelompok" class="hidden">
+            👥 Kelompok
+          </label>
+        </div>
+      </div>
+
+      <!-- Tanggal -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Tanggal Diberikan</label>
+          <input id="fTglDiberikan" type="date"
+            class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition">
+        </div>
+        <div class="space-y-1.5">
+          <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Tanggal Deadline</label>
+          <input id="fTglDeadline" type="date"
+            class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition">
+        </div>
+      </div>
+
+      <!-- Deskripsi -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Deskripsi / Catatan</label>
+        <textarea id="fDeskripsi" rows="3" placeholder="Detail tugas, ketentuan, atau hal penting lainnya…"
+          class="w-full bg-bg border border-bdr rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-accent transition resize-y placeholder:text-slate-600"></textarea>
+      </div>
+
+      <!-- Prioritas -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Tingkat Prioritas</label>
+        <div class="flex gap-2" id="prioGroup">
+          <button type="button" class="prio-btn flex-1 py-2.5 rounded-xl border border-bdr bg-bg text-slate-400 font-bold text-sm transition" data-v="1">1</button>
+          <button type="button" class="prio-btn flex-1 py-2.5 rounded-xl border border-bdr bg-bg text-slate-400 font-bold text-sm transition" data-v="2">2</button>
+          <button type="button" class="prio-btn flex-1 py-2.5 rounded-xl border border-bdr bg-bg text-slate-400 font-bold text-sm transition" data-v="3">3</button>
+          <button type="button" class="prio-btn flex-1 py-2.5 rounded-xl border border-bdr bg-bg text-slate-400 font-bold text-sm transition" data-v="4">4</button>
+          <button type="button" class="prio-btn flex-1 py-2.5 rounded-xl border border-bdr bg-bg text-slate-400 font-bold text-sm transition" data-v="5">5</button>
+        </div>
+        <p class="text-[11px] text-slate-600">1 = santai, 5 = sangat penting</p>
+        <input type="hidden" id="fPrio" value="3">
+      </div>
+
+      <p id="formErr" class="text-xs text-red-400 hidden"></p>
+
+      <div class="flex justify-end gap-2.5 pt-4 border-t border-bdr">
+        <button type="button" id="cancelModal"
+          class="border border-bdr text-slate-400 hover:text-slate-100 font-semibold text-sm rounded-xl px-4 py-2.5 transition">Batal</button>
+        <button type="submit" id="submitTaskBtn"
+          class="bg-accent hover:bg-accent2 text-[#062317] font-bold text-sm rounded-xl px-5 py-2.5 transition">
+          <span id="submitLbl">Tambah Tugas</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: KONFIRMASI HAPUS ═══════════════════ -->
+<div id="confirmOverlay"
+  class="fixed inset-0 bg-[#030712]/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+  <div class="bg-surface2 border border-bdr rounded-[20px] w-full max-w-sm p-7 text-center shadow-2xl">
+    <div class="w-12 h-12 bg-red-500/15 rounded-2xl flex items-center justify-center mx-auto mb-4">
+      <svg class="w-6 h-6 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-.9 13.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 6"/></svg>
+    </div>
+    <h3 class="font-bold text-base mb-2">Hapus tugas ini?</h3>
+    <p id="confirmTxt" class="text-sm text-slate-400 mb-5">Tindakan ini tidak bisa dibatalkan.</p>
+    <div class="flex gap-2.5">
+      <button id="confirmCancel" type="button"
+        class="flex-1 border border-bdr text-slate-400 hover:text-slate-100 font-semibold text-sm rounded-xl py-2.5 transition">Batal</button>
+      <button id="confirmDelete" type="button"
+        class="flex-1 bg-red-500 hover:bg-red-400 text-white font-bold text-sm rounded-xl py-2.5 transition">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOAST ═══════════════════ -->
+<div id="toast"
+  class="fixed bottom-6 left-1/2 -translate-x-1/2 translate-y-4 bg-surface2 border border-bdr text-slate-100 px-5 py-3 rounded-xl text-sm font-semibold flex items-center gap-2.5 shadow-2xl opacity-0 pointer-events-none transition-all duration-250 z-[60]">
+  <span id="toastDot" class="w-2 h-2 rounded-full bg-accent flex-shrink-0"></span>
+  <span id="toastTxt"></span>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ─────────────── Konstanta ─────────────── */
+  const API = window.API_BASE_URL;
+
+  const MATKUL = [
+    'Pengantar Manajemen','Pengantar Ekonomi','Matematika Bisnis',
+    'Bahasa Indonesia','Bahasa Inggris Bisnis','Kewirausahaan',
+    'Pendidikan Pancasila','Lainnya'
+  ];
+  const JENIS = [
+    'Makalah/Esai','Presentasi','Laporan/Resume',
+    'Kuis/Soal Latihan','Studi Kasus','Diskusi/Debat','Lainnya'
+  ];
+  const MK_COLOR = {
+    'Pengantar Manajemen':'#818cf8','Pengantar Ekonomi':'#38bdf8',
+    'Matematika Bisnis':'#a78bfa','Bahasa Indonesia':'#fb7185',
+    'Bahasa Inggris Bisnis':'#e879f9','Kewirausahaan':'#2dd4bf',
+    'Pendidikan Pancasila':'#c084fc','Lainnya':'#94a3b8'
+  };
+
+  /* ─────────────── State ─────────────── */
+  let token = localStorage.getItem('tt_token') || null;
+  let me    = null;
+  try { me = JSON.parse(localStorage.getItem('tt_user') || 'null'); } catch (_) {}
+
+  let tasks        = [];
+  let curFilter    = 'Semua';
+  let editingId    = null;
+  let deletingId   = null;
+  let pollTimer    = null;
+  let pubPollTimer = null;
+
+  /* ─────────────── Helpers ─────────────── */
+  const $ = s => document.querySelector(s);
+  const $$ = s => Array.from(document.querySelectorAll(s));
+
+  function esc(str) {
+    const d = document.createElement('div');
+    d.textContent = str == null ? '' : String(str);
+    return d.innerHTML;
+  }
+
+  function today() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+  function diffDays(iso) {
+    if (!iso) return 9999;
+    return Math.round((new Date(iso + 'T00:00:00') - today()) / 86400000);
+  }
+  function fmtDate(iso) {
+    if (!iso) return '–';
+    return new Date(iso + 'T00:00:00').toLocaleDateString('id-ID', {
+      day:'numeric', month:'short', year:'numeric'
+    });
+  }
+  function isoToday(offset = 0) {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toISOString().slice(0, 10);
+  }
+
+  /* ─────────────── Toast ─────────────── */
+  let toastT = null;
+  function toast(msg, type) {
+    $('#toastTxt').textContent = msg;
+    $('#toastDot').className = 'w-2 h-2 rounded-full flex-shrink-0 '
+      + (type === 'err' ? 'bg-red-400' : 'bg-accent');
+    const el = $('#toast');
+    el.classList.remove('opacity-0','pointer-events-none','translate-y-4');
+    el.classList.add('opacity-100');
+    clearTimeout(toastT);
+    toastT = setTimeout(() => {
+      el.classList.add('opacity-0','pointer-events-none','translate-y-4');
+      el.classList.remove('opacity-100');
+    }, 2800);
+  }
+
+  /* ─────────────── API fetch ─────────────── */
+  async function api(path, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+
+    let res;
+    try {
+      res = await fetch(API + path, { ...opts, headers });
+    } catch (_) {
+      throw new Error('Tidak bisa terhubung ke server. Cek apakah backend sedang berjalan.');
+    }
+
+    let data = null;
+    try { data = await res.json(); } catch (_) {}
+
+    if (res.status === 401) {
+      logout(false);
+      showLogin();
+      throw new Error((data && data.error) || 'Sesi berakhir, silakan login kembali.');
+    }
+    if (!res.ok) throw new Error((data && data.error) || 'Terjadi kesalahan pada server.');
+    return data;
+  }
+
+  /* ─────────────── Screen switching ─────────────── */
+  function showLogin() {
+    stopPolls();
+    $('#loginScreen').classList.remove('hidden');
+    $('#publicScreen').classList.add('hidden');
+    $('#appScreen').classList.add('hidden');
+  }
+  function showPublic() {
+    stopPolls();
+    $('#loginScreen').classList.add('hidden');
+    $('#publicScreen').classList.remove('hidden');
+    $('#appScreen').classList.add('hidden');
+    fetchPublicStats();
+    pubPollTimer = setInterval(fetchPublicStats, 15000);
+  }
+  function showApp() {
+    stopPolls();
+    $('#loginScreen').classList.add('hidden');
+    $('#publicScreen').classList.add('hidden');
+    $('#appScreen').classList.remove('hidden');
+    $('#userGreet').textContent = 'Halo, ' + me.nama + ' 👋';
+    $('#roleBadge').textContent = me.role === 'dosen' ? 'Dosen' : 'Mahasiswa';
+    fillFormSelects();
+    fetchTasks();
+    pollTimer = setInterval(() => fetchTasks(true), 12000);
+  }
+  function stopPolls() {
+    if (pollTimer)    { clearInterval(pollTimer);    pollTimer    = null; }
+    if (pubPollTimer) { clearInterval(pubPollTimer); pubPollTimer = null; }
+  }
+
+  /* ─────────────── Login ─────────────── */
+  $('#loginForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const nama = $('#loginNama').value.trim();
+    const kode = $('#loginKode').value.trim();
+    $('#loginErr').classList.add('hidden');
+
+    if (!nama || !kode) {
+      $('#loginErr').textContent = 'Nama dan kode kelas wajib diisi.';
+      $('#loginErr').classList.remove('hidden');
+      return;
+    }
+
+    $('#loginBtnTxt').textContent = 'Memproses…';
+    $('#loginBtn').disabled = true;
+    try {
+      const data = await api('/login', { method:'POST', body: JSON.stringify({ nama, kode }) });
+      token = data.token;
+      me    = data.user;
+      localStorage.setItem('tt_token', token);
+      localStorage.setItem('tt_user', JSON.stringify(me));
+      showApp();
+    } catch (err) {
+      $('#loginErr').textContent = err.message;
+      $('#loginErr').classList.remove('hidden');
+    } finally {
+      $('#loginBtnTxt').textContent = 'Masuk';
+      $('#loginBtn').disabled = false;
+    }
+  });
+
+  $('#goBtnPublic').addEventListener('click', showPublic);
+  $('#backFromPublic').addEventListener('click', showLogin);
+
+  function logout() {
+    token = null; me = null;
+    localStorage.removeItem('tt_token');
+    localStorage.removeItem('tt_user');
+  }
+  $('#logoutBtn').addEventListener('click', () => { logout(); showLogin(); });
+
+  /* ─────────────── Public dashboard ─────────────── */
+  async function fetchPublicStats() {
+    try {
+      const d = await api('/public/stats');
+      $('#pubAktif').textContent  = d.tugas_aktif;
+      $('#pubSelesai').textContent = d.tugas_selesai;
+      $('#pubMatkul').textContent  = d.mata_kuliah_terbanyak
+        ? d.mata_kuliah_terbanyak + ' (' + d.mata_kuliah_terbanyak_jumlah + ' tugas)'
+        : 'Belum ada data';
+      if (d.deadline_terdekat) {
+        const dl = diffDays(d.deadline_terdekat);
+        const lbl = dl < 0 ? 'Lewat ' + Math.abs(dl) + ' hari'
+                  : dl === 0 ? 'Hari ini!'
+                  : 'H-' + dl;
+        $('#pubDeadline').textContent = lbl + ' · ' + fmtDate(d.deadline_terdekat);
+      } else {
+        $('#pubDeadline').textContent = 'Tidak ada deadline aktif';
+      }
+    } catch (_) { /* gagal diam-diam saat polling */ }
+  }
+
+  /* ─────────────── Stats ─────────────── */
+  function renderStats() {
+    let tot = tasks.length, men = 0, seg = 0, sel = 0;
+    tasks.forEach(t => {
+      if (t.selesai) { sel++; return; }
+      const d = diffDays(t.tanggal_deadline);
+      if (d <= 3) men++; else if (d <= 7) seg++;
+    });
+    $('#sTot').textContent = tot;
+    $('#sMen').textContent = men;
+    $('#sSeg').textContent = seg;
+    $('#sSel').textContent = sel;
+  }
+
+  /* ─────────────── Filter chips ─────────────── */
+  function renderChips() {
+    const counts = {};
+    tasks.forEach(t => { counts[t.mata_kuliah] = (counts[t.mata_kuliah] || 0) + 1; });
+
+    const items = ['Semua', ...MATKUL];
+    $('#chips').innerHTML = items.map(name => {
+      const cnt   = name === 'Semua' ? tasks.length : (counts[name] || 0);
+      const active = curFilter === name;
+      const dot   = name !== 'Semua'
+        ? `<i class="w-2 h-2 rounded-full inline-block flex-shrink-0" style="background:${MK_COLOR[name]}"></i>`
+        : '';
+      const cls   = active
+        ? 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[13px] font-semibold cursor-pointer whitespace-nowrap bg-accent/15 border-accent/50 text-accent'
+        : 'inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-[13px] font-semibold cursor-pointer whitespace-nowrap bg-surface border-bdr text-slate-400 hover:border-slate-400 hover:text-slate-100 transition';
+      return `<button class="${cls}" data-chip="${esc(name)}">${dot}<span>${esc(name)}</span><span class="text-[11px] opacity-70">${cnt}</span></button>`;
+    }).join('');
+  }
+
+  $('#chips').addEventListener('click', e => {
+    const btn = e.target.closest('[data-chip]');
+    if (!btn) return;
+    curFilter = btn.dataset.chip;
+    renderChips();
+    renderGrid();
+  });
+
+  /* ─────────────── Task grid ─────────────── */
+  function statusOf(t) {
+    if (t.selesai)           return { k:'done',    color:'#64748b', bg:'rgba(100,116,139,.15)', lbl:'Selesai' };
+    const d = diffDays(t.tanggal_deadline);
+    if (d < 0)               return { k:'overdue', color:'#ef4444', bg:'rgba(239,68,68,.15)',   lbl:'Lewat ' + Math.abs(d) + ' hari' };
+    if (d === 0)             return { k:'urgent',  color:'#ef4444', bg:'rgba(239,68,68,.15)',   lbl:'Hari ini!' };
+    if (d <= 3)              return { k:'urgent',  color:'#ef4444', bg:'rgba(239,68,68,.15)',   lbl:'H-' + d };
+    if (d <= 7)              return { k:'soon',    color:'#f59e0b', bg:'rgba(245,158,11,.15)',  lbl:'H-' + d };
+    return                          { k:'safe',    color:'#10b981', bg:'rgba(16,185,129,.15)',  lbl:'H-' + d };
+  }
+
+  function dotsPrio(p) {
+    let h = '<div class="flex gap-[3px] items-center" title="Prioritas ' + p + '/5">';
+    for (let i = 1; i <= 5; i++)
+      h += '<span class="w-1.5 h-1.5 rounded-full ' + (i <= p ? 'bg-accent' : 'bg-[#2a3957]') + '"></span>';
+    return h + '</div>';
+  }
+
+  function cardHtml(t) {
+    const s  = statusOf(t);
+    const mk = (t.mata_kuliah === 'Lainnya' && t.mata_kuliah_custom) ? t.mata_kuliah_custom : t.mata_kuliah;
+    const jn = (t.jenis_tugas === 'Lainnya' && t.jenis_tugas_custom) ? t.jenis_tugas_custom : t.jenis_tugas;
+    const dc = MK_COLOR[t.mata_kuliah] || '#94a3b8';
+    const dm = t.selesai ? 'opacity-60' : '';
+    const tl = t.selesai ? 'line-through decoration-slate-500 text-slate-400' : '';
+
+    const ownerTag = (me.role === 'dosen' && t.users && t.users.nama)
+      ? `<span class="inline-flex items-center gap-1 bg-surface border border-bdr text-slate-400 text-[11px] font-semibold px-2 py-0.5 rounded-full">oleh ${esc(t.users.nama)}</span>`
+      : '';
+    const desc = t.deskripsi
+      ? `<p class="text-[13px] text-slate-400 leading-relaxed line-clamp-2">${esc(t.deskripsi)}</p>`
+      : '';
+
+    return `
+<article class="fade-up bg-surface border border-bdr rounded-2xl p-[18px] flex flex-col gap-3 shadow-lg hover:-translate-y-0.5 transition-transform ${dm}"
+  style="border-left:4px solid ${s.color}" data-id="${t.id}">
+
+  <div class="flex flex-wrap gap-1.5">
+    ${ownerTag}
+    <span class="inline-flex items-center gap-1.5 bg-surface2 border border-bdr text-[12px] font-semibold px-2.5 py-1 rounded-full">
+      <i class="w-1.5 h-1.5 rounded-full inline-block flex-shrink-0" style="background:${dc}"></i>${esc(mk)}
+    </span>
+    <span class="inline-flex items-center bg-surface2 border border-bdr text-[12px] font-semibold px-2.5 py-1 rounded-full">${esc(jn)}</span>
+    <span class="inline-flex items-center bg-surface2 border border-bdr text-[12px] font-semibold px-2.5 py-1 rounded-full">
+      ${t.mode === 'kelompok' ? '👥 Kelompok' : '👤 Individu'}
+    </span>
+  </div>
+
+  <h3 class="font-bold text-[1rem] leading-snug ${tl}">${esc(t.judul)}</h3>
+  ${desc}
+
+  <p class="text-[12px] text-slate-500">
+    📅 Diberikan ${fmtDate(t.tanggal_diberikan)} &nbsp;·&nbsp; ⏰ Deadline ${fmtDate(t.tanggal_deadline)}
+  </p>
+
+  <div class="flex items-center justify-between flex-wrap gap-2 pt-3 border-t border-bdr mt-auto">
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <span class="font-bold text-[12px] px-2.5 py-1 rounded-lg border"
+        style="background:${s.bg};color:${s.color};border-color:${s.color}">${s.lbl}</span>
+      ${dotsPrio(t.prioritas)}
+    </div>
+    <div class="flex gap-1.5">
+      <button type="button" data-act="toggle" data-id="${t.id}" title="${t.selesai ? 'Batalkan selesai' : 'Tandai selesai'}"
+        class="w-8 h-8 rounded-lg border border-bdr text-slate-400 hover:bg-accent/10 hover:text-accent hover:border-accent/40 flex items-center justify-center transition">
+        ${t.selesai
+          ? '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10H8L10 3 14 21 17 10H21"/></svg>'
+          : '<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7"/></svg>'}
+      </button>
+      <button type="button" data-act="edit" data-id="${t.id}" title="Edit"
+        class="w-8 h-8 rounded-lg border border-bdr text-slate-400 hover:bg-surface2 hover:text-slate-100 flex items-center justify-center transition">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 16.5V20h3.5L18.5 9 15 5.5 4 16.5Z"/><path d="M13.5 7 17 10.5"/></svg>
+      </button>
+      <button type="button" data-act="del" data-id="${t.id}" title="Hapus"
+        class="w-8 h-8 rounded-lg border border-bdr text-slate-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40 flex items-center justify-center transition">
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0-.9 13.1A2 2 0 0 1 16.1 21H7.9a2 2 0 0 1-2-1.9L5 6"/></svg>
+      </button>
+    </div>
+  </div>
+</article>`;
+  }
+
+  function sortedFiltered() {
+    let list = curFilter === 'Semua' ? tasks : tasks.filter(t => t.mata_kuliah === curFilter);
+    return [...list].sort((a, b) => {
+      if (a.selesai !== b.selesai) return a.selesai ? 1 : -1;
+      return diffDays(a.tanggal_deadline) - diffDays(b.tanggal_deadline);
+    });
+  }
+
+  function renderGrid() {
+    const list = sortedFiltered();
+    $('#taskCount').textContent = curFilter === 'Semua'
+      ? 'Menampilkan ' + list.length + ' tugas'
+      : curFilter + ' · ' + list.length + ' tugas';
+
+    if (!list.length) {
+      $('#taskGrid').innerHTML = '';
+      $('#emptyState').classList.remove('hidden');
+    } else {
+      $('#emptyState').classList.add('hidden');
+      $('#taskGrid').innerHTML = list.map(cardHtml).join('');
+    }
+  }
+
+  function renderAll() { renderStats(); renderChips(); renderGrid(); }
+
+  /* ─────────────── Fetch tasks ─────────────── */
+  async function fetchTasks(silent = false) {
+    try {
+      const data = await api('/tasks');
+      tasks = data.tasks || [];
+      $('#errState').classList.add('hidden');
+      $('#taskGrid').classList.remove('opacity-0');
+      renderAll();
+    } catch (err) {
+      if (!silent) {
+        $('#errState').classList.remove('hidden');
+        toast(err.message, 'err');
+      }
+    }
+  }
+
+  /* ─────────────── Form selects ─────────────── */
+  function fillFormSelects() {
+    $('#fMatkul').innerHTML = MATKUL.map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    $('#fJenis').innerHTML  = JENIS.map(x  => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  }
+
+  function toggleCustom(selId, wrapId) {
+    $('#' + wrapId).classList.toggle('hidden', $('#' + selId).value !== 'Lainnya');
+  }
+
+  $('#fMatkul').addEventListener('change', () => toggleCustom('fMatkul','matkulCustomWrap'));
+  $('#fJenis').addEventListener('change',  () => toggleCustom('fJenis', 'jenisCustomWrap'));
+
+  /* ─────────────── Prioritas picker ─────────────── */
+  function setPrio(p) {
+    $('#fPrio').value = p;
+    $$('.prio-btn').forEach(btn => {
+      const on = Number(btn.dataset.v) === Number(p);
+      btn.classList.toggle('border-accent',   on);
+      btn.classList.toggle('bg-accent/10',    on);
+      btn.classList.toggle('text-accent',     on);
+      btn.classList.toggle('text-slate-400',  !on);
+    });
+  }
+  $('#prioGroup').addEventListener('click', e => {
+    const btn = e.target.closest('.prio-btn');
+    if (btn) setPrio(btn.dataset.v);
+  });
+
+  /* ─────────────── Modal open/close ─────────────── */
+  function openModal(task) {
+    editingId = task ? task.id : null;
+    $('#modalHeading').textContent = task ? 'Edit Tugas' : 'Tambah Tugas Baru';
+    $('#submitLbl').textContent    = task ? 'Simpan Perubahan' : 'Tambah Tugas';
+    $('#formErr').classList.add('hidden');
+    $('#taskForm').reset();
+
+    if (task) {
+      $('#fJudul').value          = task.judul;
+      $('#fMatkul').value         = task.mata_kuliah;
+      $('#fMatkulCustom').value   = task.mata_kuliah_custom || '';
+      $('#fJenis').value          = task.jenis_tugas;
+      $('#fJenisCustom').value    = task.jenis_tugas_custom || '';
+      const r = document.querySelector(`input[name="fMode"][value="${task.mode}"]`);
+      if (r) r.checked = true;
+      $('#fTglDiberikan').value   = task.tanggal_diberikan || '';
+      $('#fTglDeadline').value    = task.tanggal_deadline  || '';
+      $('#fDeskripsi').value      = task.deskripsi || '';
+      setPrio(task.prioritas || 3);
+    } else {
+      document.querySelector('input[name="fMode"][value="individu"]').checked = true;
+      $('#fTglDiberikan').value = isoToday();
+      $('#fTglDeadline').value  = isoToday(7);
+      setPrio(3);
+    }
+    toggleCustom('fMatkul','matkulCustomWrap');
+    toggleCustom('fJenis', 'jenisCustomWrap');
+
+    const ov = $('#taskOverlay');
+    ov.classList.remove('opacity-0','pointer-events-none');
+    ov.classList.add('opacity-100');
+    $('#taskModalBox').classList.remove('translate-y-3');
+    setTimeout(() => $('#fJudul').focus(), 60);
+  }
+
+  function closeModal() {
+    const ov = $('#taskOverlay');
+    ov.classList.add('opacity-0','pointer-events-none');
+    ov.classList.remove('opacity-100');
+    $('#taskModalBox').classList.add('translate-y-3');
+    editingId = null;
+  }
+
+  $('#addBtn').addEventListener('click', () => openModal(null));
+  $('#closeModal').addEventListener('click', closeModal);
+  $('#cancelModal').addEventListener('click', closeModal);
+  $('#taskOverlay').addEventListener('click', e => { if (e.target === $('#taskOverlay')) closeModal(); });
+
+  /* ─────────────── Form submit ─────────────── */
+  $('#taskForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    $('#formErr').classList.add('hidden');
+
+    const judul           = $('#fJudul').value.trim();
+    const mata_kuliah     = $('#fMatkul').value;
+    const matkul_custom   = $('#fMatkulCustom').value.trim();
+    const jenis_tugas     = $('#fJenis').value;
+    const jenis_custom    = $('#fJenisCustom').value.trim();
+    const modeEl          = document.querySelector('input[name="fMode"]:checked');
+    const mode            = modeEl ? modeEl.value : 'individu';
+    const tgl_diberikan   = $('#fTglDiberikan').value;
+    const tgl_deadline    = $('#fTglDeadline').value;
+    const deskripsi       = $('#fDeskripsi').value.trim();
+    const prioritas       = Number($('#fPrio').value) || 3;
+
+    if (!judul || !mata_kuliah || !jenis_tugas || !tgl_deadline) {
+      $('#formErr').textContent = 'Judul, mata kuliah, jenis tugas, dan deadline wajib diisi.';
+      $('#formErr').classList.remove('hidden');
+      return;
+    }
+    if (mata_kuliah === 'Lainnya' && !matkul_custom) {
+      $('#formErr').textContent = 'Isi nama mata kuliah untuk opsi "Lainnya".';
+      $('#formErr').classList.remove('hidden');
+      return;
+    }
+    if (jenis_tugas === 'Lainnya' && !jenis_custom) {
+      $('#formErr').textContent = 'Isi nama jenis tugas untuk opsi "Lainnya".';
+      $('#formErr').classList.remove('hidden');
+      return;
+    }
+
+    const body = {
+      judul, mata_kuliah, mata_kuliah_custom: matkul_custom,
+      jenis_tugas, jenis_tugas_custom: jenis_custom,
+      mode, tanggal_diberikan: tgl_diberikan,
+      tanggal_deadline: tgl_deadline, deskripsi, prioritas
+    };
+
+    $('#submitTaskBtn').disabled = true;
+    try {
+      if (editingId) {
+        await api('/tasks/' + editingId, { method:'PUT', body: JSON.stringify(body) });
+        toast('Tugas berhasil diperbarui ✓');
+      } else {
+        await api('/tasks', { method:'POST', body: JSON.stringify(body) });
+        toast('Tugas baru berhasil ditambahkan ✓');
+      }
+      closeModal();
+      fetchTasks();
+    } catch (err) {
+      $('#formErr').textContent = err.message;
+      $('#formErr').classList.remove('hidden');
+    } finally {
+      $('#submitTaskBtn').disabled = false;
+    }
+  });
+
+  /* ─────────────── Grid actions (delegasi event) ─────────────── */
+  $('#taskGrid').addEventListener('click', async e => {
+    const btn = e.target.closest('[data-act]');
+    if (!btn) return;
+    const { act, id } = btn.dataset;
+    const task = tasks.find(t => t.id === id);
+    if (!task) return;
+
+    if (act === 'edit') {
+      openModal(task);
+    } else if (act === 'del') {
+      deletingId = id;
+      $('#confirmTxt').textContent = `Hapus "${task.judul}"? Tindakan ini tidak bisa dibatalkan.`;
+      const ov = $('#confirmOverlay');
+      ov.classList.remove('opacity-0','pointer-events-none');
+      ov.classList.add('opacity-100');
+    } else if (act === 'toggle') {
+      try {
+        await api('/tasks/' + id, { method:'PUT', body: JSON.stringify({ selesai: !task.selesai }) });
+        toast(!task.selesai ? 'Tugas ditandai selesai ✓' : 'Tugas dibatalkan selesai');
+        fetchTasks();
+      } catch (err) { toast(err.message, 'err'); }
+    }
+  });
+
+  /* ─────────────── Confirm delete ─────────────── */
+  function closeConfirm() {
+    const ov = $('#confirmOverlay');
+    ov.classList.add('opacity-0','pointer-events-none');
+    ov.classList.remove('opacity-100');
+    deletingId = null;
+  }
+  $('#confirmCancel').addEventListener('click', closeConfirm);
+  $('#confirmOverlay').addEventListener('click', e => { if (e.target === $('#confirmOverlay')) closeConfirm(); });
+  $('#confirmDelete').addEventListener('click', async () => {
+    if (!deletingId) return;
+    try {
+      await api('/tasks/' + deletingId, { method:'DELETE' });
+      toast('Tugas berhasil dihapus');
+      closeConfirm();
+      fetchTasks();
+    } catch (err) {
+      toast(err.message, 'err');
+      closeConfirm();
+    }
+  });
+
+  /* ─────────────── Keyboard ESC ─────────────── */
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeModal(); closeConfirm(); }
+  });
+
+  /* ─────────────── Init ─────────────── */
+  if (token && me) {
+    showApp();
+  } else {
+    showLogin();
+  }
+
+})();
+</script>
+</body>
+</html>
