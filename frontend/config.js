@@ -1,1 +1,1 @@
-window.API_BASE_URL = "tracker-tugas-copy-production.up.railway.app";
+window.API_BASE_URL = "https://tracker-tugas-copy-production.up.railway.app";
