@@ -33,9 +33,9 @@ if (!JWT_SECRET || !CLASS_CODE || !ADMIN_CODE) {
 // Daftar pilihan yang valid — harus sinkron dengan frontend
 // ------------------------------------------------------------
 const MATA_KULIAH_LIST = [
-  'Pengantar Manajemen', 'Pengantar Ekonomi', 'Matematika Bisnis',
-  'Bahasa Indonesia',    'Bahasa Inggris Bisnis', 'Kewirausahaan',
-  'Pendidikan Pancasila','Lainnya'
+  'Pengantar Manajemen', 'Pengantar Ekonomi', 'Matematika Ekonomi dan Bisnis',
+  'Bahasa Indonesia',    'Bahasa Inggris', 'Bahasa Arab',
+  'Pengantar Bisnis','Worldview Islam','KepondokModernan','Pengantar Akuntansi'
 ];
 const JENIS_TUGAS_LIST = [
   'Makalah/Esai',     'Presentasi',    'Laporan/Resume',
