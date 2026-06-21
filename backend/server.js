@@ -10,6 +10,7 @@
 //   PUT    /tasks/:id     -> edit tugas atau toggle selesai
 //   DELETE /tasks/:id     -> hapus tugas
 //   GET    /public/stats  -> statistik agregat anonim (tanpa login)
+//   GET    /public/tasks  -> daftar tugas anonim, tanpa nama mahasiswa (tanpa login)
 // ============================================================
 
 require('dotenv').config();
@@ -370,6 +371,28 @@ app.get('/public/stats', async (req, res) => {
   } catch (e) {
     console.error('GET /public/stats error:', e);
     res.status(500).json({ error: 'Gagal mengambil statistik publik.' });
+  }
+});
+
+// ------------------------------------------------------------
+// GET /public/tasks — TANPA LOGIN (daftar tugas, anonim)
+// Sengaja hanya SELECT kolom non-identitas di bawah ini saja —
+// tidak ada user_id dan tidak ada join ke tabel users, supaya
+// nama mahasiswa tidak pernah ikut terkirim ke browser sama sekali.
+// ------------------------------------------------------------
+app.get('/public/tasks', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('tasks')
+      .select('id, judul, mata_kuliah, mata_kuliah_custom, jenis_tugas, jenis_tugas_custom, mode, tanggal_deadline, prioritas, selesai')
+      .order('tanggal_deadline', { ascending: true });
+
+    if (error) throw error;
+
+    res.json({ tasks: data });
+  } catch (e) {
+    console.error('GET /public/tasks error:', e);
+    res.status(500).json({ error: 'Gagal mengambil daftar tugas publik.' });
   }
 });
 
