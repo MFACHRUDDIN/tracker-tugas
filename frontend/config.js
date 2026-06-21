@@ -4,7 +4,7 @@
 // 1) Saat masih coba-coba di komputer sendiri (backend jalan
 //    lewat "npm start" di folder backend/), biarkan seperti ini:
 //
-//       window.API_BASE_URL = "http://localhost:3000";
+//       window.API_BASE_URL = "https://tracker-tugas-copy-production.up.railway.app";
 //
 // 2) Setelah backend berhasil online di Railway/Render, ganti
 //    menjadi URL backend kamu, CONTOH:
